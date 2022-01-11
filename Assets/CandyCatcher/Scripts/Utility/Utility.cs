@@ -10,7 +10,7 @@ namespace Utility {
         }
 
         public static string ParseFloatToString(float value) {
-            var rounded = Mathf.Round(value * 100) * 0.01f;
+            var rounded = Mathf.Round(value);
             return rounded.ToString();
         }
     }

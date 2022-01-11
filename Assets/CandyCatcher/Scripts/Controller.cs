@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 using Utility;
 
 public class Controller : MonoBehaviour
@@ -58,8 +59,8 @@ public class Controller : MonoBehaviour
         timeTxt.text = "Time: " + Parser.ParseFloatToString(time);
 
         if(time < 0) {
-            transferData.Score = score;
-            SceneManager.LoadScene("ScoreScreen");
+            transferData.score = (int)score;
+            SceneManager.LoadScene("ScoreScene");
         }
 
 
@@ -77,12 +78,13 @@ public class Controller : MonoBehaviour
         while (true)
         {
             yield return new WaitForSeconds(timeIntervall);
+            var candyIndex = Random.Range(0, candys.Count);
             var screenPoint = new  Vector3 (Random.Range(margin, canvWidth - margin),canvHeight+ 100, 16);
             var worldPos = cam.ScreenToWorldPoint ( screenPoint );
-            var obj = Instantiate(candys[0].candyPref, worldPos, Quaternion.identity);
+            var obj = Instantiate(candys[candyIndex].candyPref, worldPos, Quaternion.identity);
             obj.transform.parent = candyContainer.transform;
             obj.transform.name = ID.ToString();
-            candyData.Add(candys[0]);
+            candyData.Add(candys[candyIndex]);
             ID++;
            
         }
@@ -95,7 +97,11 @@ public class Controller : MonoBehaviour
     }
 
     public void CandyCatched(int id) {
-        score += candyData[id].value;
+        if(candyData[id].goodCandy) {
+            score += candyData[id].value;
+        }  else {
+            score -= candyData[id].value;
+        }
         scoreTxt.text = "Score: " + score.ToString();
     }
 
