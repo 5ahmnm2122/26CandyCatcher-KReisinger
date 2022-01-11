@@ -13,6 +13,7 @@ public class Controller : MonoBehaviour
     [Space(10)]
     public float score;
     public float time = 60;
+    public int life = 3;
 
     [Header("Settings")]
     [Space(10)]
@@ -20,6 +21,7 @@ public class Controller : MonoBehaviour
     public float speed;
     public float margin = 30;
     public float timeIntervall = 1f;
+    public bool timeMode;
 
     [Header("References")]
     [Space(10)]
@@ -27,6 +29,7 @@ public class Controller : MonoBehaviour
     public UserData transferData;
     public GameObject player;
     public GameObject canvas;
+    public GameObject timePanel;
     public GameObject candyContainer;
     public Camera cam;
     public Text scoreTxt;
@@ -37,38 +40,54 @@ public class Controller : MonoBehaviour
 
     private int ID = 0;
 
+
+
     private float canvWidth;
     private float canvHeight;
     public List<CandyData> candys; 
     public List<CandyData> candyData = new List<CandyData>();
     void Start()
     {
+        GameEvents.current.onCandyCatched += CandyCatched;
 
+
+
+
+
+        timeMode = transferData.timeMode;
+        if(!timeMode) {
+            timeTxt.text = "Leben: 3";
+        }
         StartCoroutine(SpawnCandy());
         RectTransform canvRect = canvas.GetComponentInParent<Canvas>().GetComponent<RectTransform>();
         canvWidth = canvRect.rect.width;
         canvHeight = canvRect.rect.height;
-        GameEvents.current.onCandyCatched += CandyCatched;
 
     }
 
 
     void Update()
     {
-        time -= Time.deltaTime;
-        timeTxt.text = "Time: " + Parser.ParseFloatToString(time);
+        if(timeMode) {
+            time -= Time.deltaTime;
+            timeTxt.text = "Time: " + Parser.ParseFloatToString(time);
 
-        if(time < 0) {
-            transferData.score = (int)score;
-            SceneManager.LoadScene("ScoreScene");
+            if(time < 0) {
+                transferData.score = (int)score;
+                SceneManager.LoadScene("ScoreScene");
+            }
         }
 
 
         if (Input.GetKey("a")) {
-            player.transform.position = new Vector3(player.transform.position.x - speed, player.transform.position.y, player.transform.position.z);
+            if(-11.65f < player.transform.position.x) {
+                player.transform.position = new Vector3(player.transform.position.x - speed, player.transform.position.y, player.transform.position.z);
+            }
         } 
         if(Input.GetKey("d")) {
-            player.transform.position = new Vector3(player.transform.position.x + speed, player.transform.position.y, player.transform.position.z);
+            if(11.65f > player.transform.position.x) {
+                player.transform.position = new Vector3(player.transform.position.x + speed, player.transform.position.y, player.transform.position.z);
+            }
         }
     }
 
@@ -84,6 +103,9 @@ public class Controller : MonoBehaviour
             var obj = Instantiate(candys[candyIndex].candyPref, worldPos, Quaternion.identity);
             obj.transform.parent = candyContainer.transform;
             obj.transform.name = ID.ToString();
+            if(!timeMode) {
+                obj.GetComponent<Rigidbody>().drag = 1;
+            }
             candyData.Add(candys[candyIndex]);
             ID++;
            
@@ -100,7 +122,16 @@ public class Controller : MonoBehaviour
         if(candyData[id].goodCandy) {
             score += candyData[id].value;
         }  else {
-            score -= candyData[id].value;
+            if(timeMode) {
+                score -= candyData[id].value;
+            } else {
+                life--;
+                timeTxt.text = "Leben: " + life.ToString();
+                if(life <= 0) {
+                    transferData.score = (int)score;
+                    SceneManager.LoadScene("ScoreScene");
+                }
+            }
         }
         scoreTxt.text = "Score: " + score.ToString();
     }
